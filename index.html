@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Golden Unicorn</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: linear-gradient(to bottom, #87CEEB, #98FB98);
+            font-family: 'Arial', sans-serif;
+        }
+        
+        #container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        #info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+            z-index: 100;
+            font-size: 18px;
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 10px;
+            backdrop-filter: blur(5px);
+        }
+        
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 24px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+            z-index: 100;
+        }
+        
+        .controls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+            z-index: 100;
+            background: rgba(0,0,0,0.3);
+            padding: 10px;
+            border-radius: 5px;
+            backdrop-filter: blur(5px);
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="loading">Loading magical scene...</div>
+        <div id="info">
+            <h2>🦄 The Golden Unicorn 🦄</h2>
+            <p>A moment of pure wonder and awe</p>
+        </div>
+        <div class="controls">
+            <p>Mouse: Look around | WASD: Move | Scroll: Zoom</p>
+        </div>
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://esm.sh/three@0.158.0",
+            "three/addons/": "https://esm.sh/three@0.158.0/examples/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        let scene, camera, renderer, controls;
+        let unicorn, people = [], flowers = [], rainbows = [];
+        let lightBeams = [];
+        let clock = new THREE.Clock();
+
+        function init() {
+            // Scene setup
+            scene = new THREE.Scene();
+            scene.fog = new THREE.Fog(0x87CEEB, 10, 200);
+            
+            // Camera
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 5, 15);
+            
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.setClearColor(0x87CEEB);
+            document.getElementById('container').appendChild(renderer.domElement);
+            
+            // Controls
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.maxPolarAngle = Math.PI / 2;
+            
+            setupLighting();
+            createGround();
+            createUnicorn();
+            createPeople();
+            createFlowers();
+            createRainbows();
+            createLightBeams();
+            
+            document.getElementById('loading').style.display = 'none';
+            
+            animate();
+        }
+
+        function setupLighting() {
+            // Ambient light
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+            scene.add(ambientLight);
+            
+            // Main directional light (sun)
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+            directionalLight.position.set(10, 20, 10);
+            directionalLight.castShadow = true;
+            directionalLight.shadow.mapSize.width = 2048;
+            directionalLight.shadow.mapSize.height = 2048;
+            scene.add(directionalLight);
+            
+            // Golden light for unicorn
+            const goldLight = new THREE.PointLight(0xffd700, 2, 20);
+            goldLight.position.set(0, 5, 0);
+            scene.add(goldLight);
+        }
+
+        function createGround() {
+            const groundGeometry = new THREE.PlaneGeometry(100, 100);
+            const groundMaterial = new THREE.MeshLambertMaterial({ 
+                color: 0x2d5a2d,
+                transparent: true,
+                opacity: 0.8
+            });
+            const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+            ground.rotation.x = -Math.PI / 2;
+            ground.receiveShadow = true;
+            scene.add(ground);
+        }
+
+        function createUnicorn() {
+            unicorn = new THREE.Group();
+            
+            // Body
+            const bodyGeometry = new THREE.CylinderGeometry(0.8, 1.2, 3, 8);
+            const bodyMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0xffd700,
+                shininess: 100,
+                specular: 0xffffff
+            });
+            const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+            body.rotation.z = Math.PI / 2;
+            body.castShadow = true;
+            unicorn.add(body);
+            
+            // Head
+            const headGeometry = new THREE.SphereGeometry(0.7, 8, 8);
+            const head = new THREE.Mesh(headGeometry, bodyMaterial);
+            head.position.set(2, 0.5, 0);
+            head.castShadow = true;
+            unicorn.add(head);
+            
+            // Horn
+            const hornGeometry = new THREE.ConeGeometry(0.15, 1.5, 8);
+            const hornMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0xffffff,
+                shininess: 100
+            });
+            const horn = new THREE.Mesh(hornGeometry, hornMaterial);
+            horn.position.set(2.5, 1.2, 0);
+            horn.rotation.z = -Math.PI / 6;
+            horn.castShadow = true;
+            unicorn.add(horn);
+            
+            // Legs
+            const legGeometry = new THREE.CylinderGeometry(0.2, 0.25, 2, 8);
+            const legMaterial = new THREE.MeshPhongMaterial({ color: 0xffd700 });
+            
+            for (let i = 0; i < 4; i++) {
+                const leg = new THREE.Mesh(legGeometry, legMaterial);
+                leg.position.set(
+                    i < 2 ? -0.8 : 0.8,
+                    -2,
+                    i % 2 === 0 ? 0.5 : -0.5
+                );
+                leg.castShadow = true;
+                unicorn.add(leg);
+            }
+            
+            // Mane
+            const maneGeometry = new THREE.SphereGeometry(0.4, 8, 8);
+            const maneMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0xff69b4,
+                transparent: true,
+                opacity: 0.8
+            });
+            
+            for (let i = 0; i < 5; i++) {
+                const mane = new THREE.Mesh(maneGeometry, maneMaterial);
+                mane.position.set(
+                    1.5 + i * 0.3,
+                    0.8 + Math.sin(i) * 0.3,
+                    0
+                );
+                mane.scale.set(0.8, 1.2, 0.8);
+                unicorn.add(mane);
+            }
+            
+            // Tail
+            const tailGeometry = new THREE.SphereGeometry(0.3, 8, 8);
+            for (let i = 0; i < 3; i++) {
+                const tail = new THREE.Mesh(tailGeometry, maneMaterial);
+                tail.position.set(-1.5 - i * 0.3, 0.5, 0);
+                tail.scale.set(0.8, 1.5, 0.8);
+                unicorn.add(tail);
+            }
+            
+            unicorn.position.set(0, 2, 0);
+            scene.add(unicorn);
+        }
+
+        function createPeople() {
+            const positions = [
+                { x: -8, z: 5 },
+                { x: -6, z: 8 },
+                { x: 6, z: 6 },
+                { x: 8, z: 3 },
+                { x: -4, z: 10 },
+                { x: 4, z: 9 }
+            ];
+            
+            positions.forEach((pos, index) => {
+                const person = new THREE.Group();
+                
+                // Body
+                const bodyGeometry = new THREE.CylinderGeometry(0.3, 0.4, 1.5, 8);
+                const colors = [0x4169E1, 0x32CD32, 0xFF6347, 0x8A2BE2, 0xFF1493, 0x00CED1];
+                const bodyMaterial = new THREE.MeshLambertMaterial({ color: colors[index] });
+                const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+                body.position.y = 1.5;
+                body.castShadow = true;
+                person.add(body);
+                
+                // Head
+                const headGeometry = new THREE.SphereGeometry(0.3, 8, 8);
+                const headMaterial = new THREE.MeshLambertMaterial({ color: 0xFFDBB5 });
+                const head = new THREE.Mesh(headGeometry, headMaterial);
+                head.position.y = 2.5;
+                head.castShadow = true;
+                person.add(head);
+                
+                // Arms pointing at unicorn
+                const armGeometry = new THREE.CylinderGeometry(0.1, 0.1, 0.8, 8);
+                const armMaterial = new THREE.MeshLambertMaterial({ color: 0xFFDBB5 });
+                
+                const leftArm = new THREE.Mesh(armGeometry, armMaterial);
+                leftArm.position.set(-0.5, 1.8, 0);
+                leftArm.rotation.z = Math.PI / 4;
+                leftArm.castShadow = true;
+                person.add(leftArm);
+                
+                const rightArm = new THREE.Mesh(armGeometry, armMaterial);
+                rightArm.position.set(0.5, 1.8, 0);
+                rightArm.rotation.z = -Math.PI / 4;
+                rightArm.castShadow = true;
+                person.add(rightArm);
+                
+                // Legs
+                const legGeometry = new THREE.CylinderGeometry(0.1, 0.1, 1, 8);
+                const legMaterial = new THREE.MeshLambertMaterial({ color: colors[index] });
+                
+                const leftLeg = new THREE.Mesh(legGeometry, legMaterial);
+                leftLeg.position.set(-0.2, 0.5, 0);
+                leftLeg.castShadow = true;
+                person.add(leftLeg);
+                
+                const rightLeg = new THREE.Mesh(legGeometry, legMaterial);
+                rightLeg.position.set(0.2, 0.5, 0);
+                rightLeg.castShadow = true;
+                person.add(rightLeg);
+                
+                person.position.set(pos.x, 0, pos.z);
+                person.lookAt(0, 2, 0); // Look at unicorn
+                scene.add(person);
+                people.push(person);
+            });
+        }
+
+        function createFlowers() {
+            for (let i = 0; i < 200; i++) {
+                const flower = new THREE.Group();
+                
+                // Stem
+                const stemGeometry = new THREE.CylinderGeometry(0.02, 0.02, 0.5, 8);
+                const stemMaterial = new THREE.MeshLambertMaterial({ color: 0x228B22 });
+                const stem = new THREE.Mesh(stemGeometry, stemMaterial);
+                stem.position.y = 0.25;
+                flower.add(stem);
+                
+                // Flower head
+                const flowerGeometry = new THREE.SphereGeometry(0.1, 8, 8);
+                const flowerColors = [0xFF69B4, 0xFF1493, 0xFFB6C1, 0xFF0000, 0xFF4500, 0xFFD700, 0x9370DB];
+                const flowerMaterial = new THREE.MeshLambertMaterial({ 
+                    color: flowerColors[Math.floor(Math.random() * flowerColors.length)]
+                });
+                const flowerHead = new THREE.Mesh(flowerGeometry, flowerMaterial);
+                flowerHead.position.y = 0.5;
+                flower.add(flowerHead);
+                
+                // Random position
+                const angle = Math.random() * Math.PI * 2;
+                const distance = 3 + Math.random() * 40;
+                flower.position.set(
+                    Math.cos(angle) * distance,
+                    0,
+                    Math.sin(angle) * distance
+                );
+                
+                scene.add(flower);
+                flowers.push(flower);
+            }
+        }
+
+        function createRainbows() {
+            const rainbowColors = [0xFF0000, 0xFF7F00, 0xFFFF00, 0x00FF00, 0x0000FF, 0x4B0082, 0x9400D3];
+            
+            for (let rainbow = 0; rainbow < 2; rainbow++) {
+                const rainbowGroup = new THREE.Group();
+                
+                rainbowColors.forEach((color, index) => {
+                    const radius = 25 + index * 0.5;
+                    const curve = new THREE.EllipseCurve(
+                        0, 0,
+                        radius, radius,
+                        0, Math.PI,
+                        false,
+                        0
+                    );
+                    
+                    const points = curve.getPoints(50);
+                    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                    const material = new THREE.LineBasicMaterial({ 
+                        color: color,
+                        transparent: true,
+                        opacity: 0.7,
+                        linewidth: 3
+                    });
+                    
+                    const line = new THREE.Line(geometry, material);
+                    line.rotation.x = -Math.PI / 2;
+                    rainbowGroup.add(line);
+                });
+                
+                rainbowGroup.position.set(
+                    rainbow === 0 ? -20 : 20,
+                    15,
+                    rainbow === 0 ? -10 : -15
+                );
+                
+                scene.add(rainbowGroup);
+                rainbows.push(rainbowGroup);
+            }
+        }
+
+        function createLightBeams() {
+            for (let i = 0; i < 8; i++) {
+                const beamGeometry = new THREE.CylinderGeometry(0.1, 2, 20, 8);
+                const beamMaterial = new THREE.MeshBasicMaterial({ 
+                    color: 0xffffff,
+                    transparent: true,
+                    opacity: 0.1
+                });
+                const beam = new THREE.Mesh(beamGeometry, beamMaterial);
+                
+                const angle = (i / 8) * Math.PI * 2;
+                beam.position.set(
+                    Math.cos(angle) * 5,
+                    10,
+                    Math.sin(angle) * 5
+                );
+                beam.lookAt(0, 0, 0);
+                
+                scene.add(beam);
+                lightBeams.push(beam);
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            const time = clock.getElapsedTime();
+            
+            // Animate unicorn
+            if (unicorn) {
+                unicorn.position.y = 2 + Math.sin(time * 2) * 0.2;
+                unicorn.rotation.y = Math.sin(time * 0.5) * 0.1;
+            }
+            
+            // Animate people (subtle movements)
+            people.forEach((person, index) => {
+                person.position.y = Math.sin(time * 2 + index) * 0.1;
+                person.children[1].rotation.y = Math.sin(time + index) * 0.1; // Head movement
+            });
+            
+            // Animate flowers
+            flowers.forEach((flower, index) => {
+                flower.rotation.y = Math.sin(time * 0.5 + index * 0.1) * 0.1;
+            });
+            
+            // Animate light beams
+            lightBeams.forEach((beam, index) => {
+                beam.material.opacity = 0.05 + Math.sin(time * 3 + index) * 0.03;
+                beam.rotation.y = time * 0.1 + index * 0.2;
+            });
+            
+            // Animate rainbows
+            rainbows.forEach((rainbow, index) => {
+                rainbow.position.y = 15 + Math.sin(time * 0.5 + index * Math.PI) * 2;
+            });
+            
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        window.addEventListener('resize', onWindowResize);
+        
+        // Initialize the scene
+        init();
+    </script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"4c6229722a6346bc8eb5cb0e5eae5d41","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+</html>
+
